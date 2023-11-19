@@ -2,8 +2,10 @@ use crate::core::{
     hashing::{calculate_hash, hash_to_binary_representation},
     mining::DIFFICULTY_PREFIX,
 };
+use chrono::Utc;
 use hex::FromHexError;
 
+#[derive(Debug)]
 pub struct Block {
     pub height: u64,
     pub hash: String,
@@ -14,7 +16,29 @@ pub struct Block {
 }
 
 impl Block {
-    fn verify(&self, prev_block: &Block) -> Result<bool, FromHexError> {
+    pub fn genesis() -> Block {
+        Block {
+            height: 0,
+            hash: "0000f816a87f806bb0073dcf026a64fb40c946b5abee2573702828694d5b4c43".to_string(),
+            previous_hash: String::from("genesis"),
+            timestamp: Utc::now().timestamp(),
+            data: String::from("genesis!"),
+            nonce: 2836
+        }
+    }
+
+    pub fn new(prev_block: &Block, hash: String, timestamp: i64, data: String, nonce: u64) -> Block {
+        Block {
+            height: prev_block.height + 1,
+            hash: hash,
+            previous_hash: prev_block.hash.clone(),
+            timestamp: timestamp,
+            data: data,
+            nonce: nonce
+        }
+    }
+
+    pub fn verify(&self, prev_block: &Block) -> Result<bool, FromHexError> {
         if self.previous_hash != prev_block.hash {
             return Ok(false);
         }

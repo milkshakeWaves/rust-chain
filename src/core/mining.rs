@@ -13,6 +13,10 @@ pub fn mine_new_block(
     let mut nonce: u64 = 0;
 
     loop {
+        if nonce % 100000 == 0 {
+            println!("Still computing...");
+        }
+
         let hash = calculate_hash(height, timestamp, previous_hash, data, nonce);
         let binary_hash = hash_to_binary_representation(&hash);
 
