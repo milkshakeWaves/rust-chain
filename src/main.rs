@@ -10,15 +10,16 @@ fn main() {
         let prev_block = h.get_last_block().unwrap();
         let height = h.get_height();
         let timestamp = Utc::now().timestamp();
+        let txs = Vec::new();
 
         if height == 5 {
             return;
         }
 
         println!("Start computing hash...");
-        let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, "");
+        let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, &txs);
         println!("Computed hash");
-        let new_block = Block::new(prev_block, hash, timestamp, "".to_string(), nonce);
+        let new_block = Block::new(prev_block, hash, timestamp, txs, nonce);
         println!("Appending new block");
         match h.try_to_append(new_block) {
             Ok(_) => println!("Block appended successfully"),

@@ -9,10 +9,10 @@ fn create_chain_with_4_blocks() -> Result<(), AppendToHistoryError> {
         let prev_block = hs.get_last_block().unwrap();
         let height = hs.get_height();
         let timestamp = Utc::now().timestamp();
-        let data = "Data to include".to_string();
+        let txs = Vec::new();
 
-        let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, &data);
-        let new_block = Block::new(prev_block, hash, timestamp, data, nonce);
+        let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, &txs);
+        let new_block = Block::new(prev_block, hash, timestamp, txs, nonce);
 
         match hs.try_to_append(new_block) {
             Ok(_) => println!("Block appended successfully"),
@@ -31,10 +31,10 @@ fn append_bad_block_to_history_throw_error() -> Result<(), AppendToHistoryError>
     let prev_block = hs.get_last_block().unwrap();
     let height = hs.get_height();
     let timestamp = Utc::now().timestamp();
-    let data = "Data to include".to_string();
+    let txs = Vec::new();
 
-    let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, &data);
-    let new_block = Block::new(prev_block, hash, timestamp, data, nonce);
+    let (nonce, hash) = mine_new_block(height as u64, timestamp, &prev_block.hash, &txs);
+    let new_block = Block::new(prev_block, hash, timestamp, txs, nonce);
 
     match hs.try_to_append(new_block) {
         Ok(_) => println!("Block appended successfully"),
@@ -48,7 +48,7 @@ fn append_bad_block_to_history_throw_error() -> Result<(), AppendToHistoryError>
         parent_block,
         "fake-hash".to_string(),
         Utc::now().timestamp(),
-        "bad-data".to_string(),
+        Vec::new(),
         0u64,
     );
     match hs.try_to_append(bad_block) {

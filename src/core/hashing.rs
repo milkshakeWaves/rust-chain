@@ -1,16 +1,17 @@
 use sha2::{Digest, Sha256};
+use super::Transaction;
 
 pub fn calculate_hash(
     height: u64,
     timestamp: i64,
     previous_hash: &str,
-    data: &str,
+    txs: &Vec<Transaction>,
     nonce: u64,
 ) -> Vec<u8> {
     let data = serde_json::json!({
         "height": height,
         "previous_hash": previous_hash,
-        "data": data,
+        "txs": txs,
         "timestamp": timestamp,
         "nonce": nonce
     });

@@ -5,13 +5,15 @@ use crate::core::{
 use chrono::Utc;
 use hex::FromHexError;
 
+use super::transaction::Transaction;
+
 #[derive(Debug)]
 pub struct Block {
     pub height: u64,
     pub hash: String,
     pub previous_hash: String,
     pub timestamp: i64,
-    pub data: String,
+    pub txs: Vec<Transaction>,
     pub nonce: u64,
 }
 
@@ -22,18 +24,18 @@ impl Block {
             hash: "0000f816a87f806bb0073dcf026a64fb40c946b5abee2573702828694d5b4c43".to_string(),
             previous_hash: String::from("genesis"),
             timestamp: Utc::now().timestamp(),
-            data: String::from("genesis!"),
+            txs: Vec::new(),
             nonce: 2836
         }
     }
 
-    pub fn new(prev_block: &Block, hash: String, timestamp: i64, data: String, nonce: u64) -> Block {
+    pub fn new(prev_block: &Block, hash: String, timestamp: i64, txs: Vec<Transaction>, nonce: u64) -> Block {
         Block {
             height: prev_block.height + 1,
             hash: hash,
             previous_hash: prev_block.hash.clone(),
             timestamp: timestamp,
-            data: data,
+            txs: txs,
             nonce: nonce
         }
     }
@@ -56,7 +58,7 @@ impl Block {
             self.height,
             self.timestamp,
             &self.previous_hash,
-            &self.data,
+            &self.txs,
             self.nonce,
         ));
 

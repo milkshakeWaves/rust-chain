@@ -5,6 +5,7 @@ mod history;
 mod errors;
 
 pub type Block = models::block::Block;
+pub type Transaction = models::transaction::Transaction;
 pub type History = history::History;
 
 pub type AppendToHistoryError = errors::AppendToHistoryError;
