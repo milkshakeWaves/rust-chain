@@ -1,2 +1,3 @@
-pub mod models;
+mod models;
 mod mining;
+mod hashing;
