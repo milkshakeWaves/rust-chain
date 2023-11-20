@@ -7,7 +7,7 @@ use hex::FromHexError;
 
 use super::transaction::Transaction;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     pub height: u64,
     pub hash: String,

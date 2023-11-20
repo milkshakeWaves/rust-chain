@@ -1,9 +1,9 @@
 use chrono::Utc;
-use rust_chain::core::{mine_new_block, AppendToHistoryError, Block, History};
+use rust_chain::core::{mine_new_block, AppendToHistoryError, Block, History, NaiveReorgStrategy};
 
 #[test]
 fn create_chain_with_4_blocks() -> Result<(), AppendToHistoryError> {
-    let mut hs = History::new();
+    let mut hs = History::new(Box::new(NaiveReorgStrategy {}));
 
     for _ in 1..4 {
         let prev_block = hs.get_last_block().unwrap();
@@ -26,7 +26,7 @@ fn create_chain_with_4_blocks() -> Result<(), AppendToHistoryError> {
 
 #[test]
 fn append_bad_block_to_history_throw_error() -> Result<(), AppendToHistoryError> {
-    let mut hs = History::new();
+    let mut hs = History::new(Box::new(NaiveReorgStrategy {}));
 
     let prev_block = hs.get_last_block().unwrap();
     let height = hs.get_height();

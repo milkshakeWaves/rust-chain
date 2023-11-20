@@ -1,10 +1,10 @@
 use chrono::Utc;
-use rust_chain::core::{mine_new_block, Block, History};
+use rust_chain::core::{mine_new_block, Block, History, NaiveReorgStrategy};
 
 fn main() {
     println!("Starting the rust chain...");
 
-    let mut h = History::new();
+    let mut h = History::new(Box::new(NaiveReorgStrategy {}));
 
     loop {
         let prev_block = h.get_last_block().unwrap();
@@ -23,7 +23,7 @@ fn main() {
         println!("Appending new block");
         match h.try_to_append(new_block) {
             Ok(_) => println!("Block appended successfully"),
-            Err(e) => eprintln!("The error appending in history {}", e)
+            Err(e) => eprintln!("Error occurred while trying to append a new block: {}", e)
         }
     }
 }
