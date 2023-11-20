@@ -27,7 +27,7 @@ impl History {
         // todo: should verify other chain
         let chosen_chain = self
             .reorg_chain_strategy
-            .chose_chain(&self.chain, other_chain);
+            .choose_chain(&self.chain, other_chain);
 
         let new_chain = match chosen_chain {
             ReorgChoice::First => self.chain.clone(),
@@ -55,14 +55,14 @@ pub enum ReorgChoice {
 }
 
 pub trait ReorgChainStrategy {
-    fn chose_chain(&self, first_chain: &Vec<Block>, second_chain: &Vec<Block>) -> ReorgChoice;
+    fn choose_chain(&self, first_chain: &Vec<Block>, second_chain: &Vec<Block>) -> ReorgChoice;
     fn clone_dyn(&self) -> Box<dyn ReorgChainStrategy>;
 }
 
 #[derive(Clone)]
 pub struct NaiveReorgStrategy;
 impl ReorgChainStrategy for NaiveReorgStrategy {
-    fn chose_chain(&self, first_chain: &Vec<Block>, second_chain: &Vec<Block>) -> ReorgChoice {
+    fn choose_chain(&self, first_chain: &Vec<Block>, second_chain: &Vec<Block>) -> ReorgChoice {
         if first_chain.len() > second_chain.len() {
             return ReorgChoice::First;
         }
@@ -87,7 +87,7 @@ mod history_tests {
     use super::History;
 
     #[test]
-    fn history_chose_chain_returns_a_new_history_with_chain_chosen_by_naive_strategy() {
+    fn history_choose_chain_returns_a_new_history_with_chain_chosen_by_naive_strategy() {
         let mut hs = History::new(Box::new(NaiveReorgStrategy {}));
         let mut hs2 = History::new(Box::new(NaiveReorgStrategy {}));
 

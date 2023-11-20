@@ -23,7 +23,7 @@ fn main() {
         println!("Appending new block");
         match h.try_to_append(new_block) {
             Ok(_) => println!("Block appended successfully"),
-            Err(e) => eprintln!("The error appending in history {}", e),
+            Err(e) => eprintln!("Error occurred while trying to append a new block: {}", e)
         }
     }
 }
