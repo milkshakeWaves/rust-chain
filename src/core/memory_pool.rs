@@ -22,12 +22,17 @@ impl MemPool {
         if self.txs.len() == self.max_cap {
             self.evict_tx();
         }
+        
         let tx_priority = TransactionPriority::new_from_tx(&tx);
+        if let Some(already_existing_tx) = self.txs.insert(tx.nonce, tx) {
+            self.prioritized_txs.retain(|t| t.nonce != already_existing_tx.nonce);
+        }
         self.prioritized_txs.insert(tx_priority);
-        self.txs.insert(tx.nonce, tx);
+        
+        assert_eq!(self.prioritized_txs.len(), self.txs.len());
     }
 
-    pub fn get_txs_w_limit(&mut self, limit: usize) -> Vec<Transaction> {
+    pub fn take_txs_w_limit(&mut self, limit: usize) -> Vec<Transaction> {
         let mut result: Vec<Transaction> = Vec::new();
         for _ in 0..limit {
             let tx_priority_opt = self.prioritized_txs.pop_first();
@@ -37,6 +42,8 @@ impl MemPool {
                 }
             }
         }
+        assert_eq!(self.prioritized_txs.len(), self.txs.len());
+
         result
     }
 
@@ -49,8 +56,7 @@ impl MemPool {
     }
 
     pub fn evict_tx(&mut self) -> Option<Transaction> {
-        let evicted_tx_opt = self.prioritized_txs.pop_last();
-        if let Some(ev_tx) = evicted_tx_opt {
+        if let Some(ev_tx) = self.prioritized_txs.pop_last() {
             let evicted_nonce = ev_tx.nonce;
             return self.remove_tx(evicted_nonce);
         }
@@ -135,19 +141,19 @@ mod memory_pool_test {
 
         assert_eq!(5, mempool.len());
 
-        let retrieved_txs = mempool.get_txs_w_limit(3);
+        let retrieved_txs = mempool.take_txs_w_limit(3);
 
         assert_eq!(3, retrieved_txs.len());
         assert_eq!(104, retrieved_txs[0].nonce);
         assert_eq!(103, retrieved_txs[1].nonce);
         assert_eq!(102, retrieved_txs[2].nonce);
 
-        let left_txs = mempool.get_txs_w_limit(10);
+        let left_txs = mempool.take_txs_w_limit(10);
         assert_eq!(2, left_txs.len());
         assert_eq!(101, left_txs[0].nonce);
         assert_eq!(100, left_txs[1].nonce);
 
-        let empty_txs = mempool.get_txs_w_limit(10);
+        let empty_txs = mempool.take_txs_w_limit(10);
         assert_eq!(0, empty_txs.len());
     }
 
@@ -194,7 +200,7 @@ mod memory_pool_test {
             nonce: 123456,
             from: "from_address2".to_string(),
             to: "to_string2".to_string(),
-            amount: 12340,
+            amount: 1234500,
             fee: 80,
         });
 

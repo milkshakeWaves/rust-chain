@@ -48,9 +48,9 @@ impl TransactionPriority {
 
     pub fn new_from_tx(tx: &Transaction) -> TransactionPriority {
         TransactionPriority {
-            nonce: tx.nonce.clone(),
-            fee: tx.fee.clone(),
-            amount: tx.amount.clone()
+            nonce: tx.nonce,
+            fee: tx.fee,
+            amount: tx.amount
         }
     }
 }
