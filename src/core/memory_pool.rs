@@ -1,33 +1,40 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeSet, HashMap};
 
-use super::Transaction;
+use super::{Transaction, TransactionPriority};
 
 pub struct MemPool {
-    txs: BTreeMap<u64, Transaction>,
-    max_cap: usize
+    prioritized_txs: BTreeSet<TransactionPriority>,
+    txs: HashMap<u64, Transaction>,
+    max_cap: usize,
 }
 
 impl MemPool {
     pub fn new(max_cap: usize) -> MemPool {
-        MemPool { txs: BTreeMap::new(), max_cap }
+        MemPool {
+            prioritized_txs: BTreeSet::new(),
+            txs: HashMap::new(),
+            max_cap,
+        }
     }
 
     pub fn add_tx(&mut self, tx: Transaction) -> () {
         // todo: validate tx
         if self.txs.len() == self.max_cap {
-            self.txs.pop_first();
+            self.evict_tx();
         }
+        let tx_priority = TransactionPriority::new_from_tx(&tx);
+        self.prioritized_txs.insert(tx_priority);
         self.txs.insert(tx.nonce, tx);
     }
 
     pub fn get_txs_w_limit(&mut self, limit: usize) -> Vec<Transaction> {
         let mut result: Vec<Transaction> = Vec::new();
         for _ in 0..limit {
-            let tx = self.txs.pop_last();
-            if tx.is_some() {
-                result.push(tx.unwrap().1);
-            } else {
-                break;
+            let tx_priority_opt = self.prioritized_txs.pop_first();
+            if let Some(tx_priority) = tx_priority_opt {
+                if let Some(tx) = self.txs.remove(&tx_priority.nonce) {
+                    result.push(tx);
+                }
             }
         }
         result
@@ -37,8 +44,18 @@ impl MemPool {
         self.txs.get(&nonce)
     }
 
-    pub fn remove_tx(&mut self,  nonce: u64) -> Option<Transaction> {
+    pub fn remove_tx(&mut self, nonce: u64) -> Option<Transaction> {
         self.txs.remove(&nonce)
+    }
+
+    pub fn evict_tx(&mut self) -> Option<Transaction> {
+        let evicted_tx_opt = self.prioritized_txs.pop_last();
+        if let Some(ev_tx) = evicted_tx_opt {
+            let evicted_nonce = ev_tx.nonce;
+            return self.remove_tx(evicted_nonce);
+        }
+
+        None
     }
 
     pub fn len(&self) -> usize {
@@ -63,7 +80,7 @@ mod memory_pool_test {
             from: "from_address".to_string(),
             to: "to_string".to_string(),
             amount: 1234500,
-            fee: 100
+            fee: 100,
         });
 
         assert_eq!(1, mempool.len());
@@ -75,13 +92,13 @@ mod memory_pool_test {
 
         assert_eq!(0, mempool.len());
 
-        for i in 0..5 {
+        for i in 1..=5 {
             mempool.add_tx(Transaction {
                 nonce: i + 100,
                 from: "from_address".to_string(),
                 to: "to_string".to_string(),
                 amount: 1234500,
-                fee: i + 10
+                fee: 15 - i,
             });
         }
 
@@ -92,11 +109,11 @@ mod memory_pool_test {
             from: "from_address".to_string(),
             to: "to_string".to_string(),
             amount: 1234500,
-            fee: 5
+            fee: 5,
         });
 
         assert_eq!(5, mempool.len());
-        assert!(mempool.get_tx(100).is_none());
+        assert!(mempool.get_tx(105).is_none());
         assert!(mempool.get_tx(123456).is_some());
     }
 
@@ -112,7 +129,7 @@ mod memory_pool_test {
                 from: "from_address".to_string(),
                 to: "to_string".to_string(),
                 amount: 1234500,
-                fee: i + 10
+                fee: i + 10,
             });
         }
 
@@ -145,7 +162,7 @@ mod memory_pool_test {
             from: "from_address".to_string(),
             to: "to_string".to_string(),
             amount: 1234500,
-            fee: 100
+            fee: 100,
         });
 
         assert_eq!(1, mempool.len());
@@ -155,5 +172,35 @@ mod memory_pool_test {
 
         let non_existing_tx = mempool.remove_tx(123456);
         assert!(non_existing_tx.is_none());
+    }
+
+    #[test]
+    fn adding_two_txs_with_same_nonce_will_replace_the_tx() {
+        let mut mempool = MemPool::new(5);
+
+        assert_eq!(0, mempool.len());
+
+        mempool.add_tx(Transaction {
+            nonce: 123456,
+            from: "from_address".to_string(),
+            to: "to_string".to_string(),
+            amount: 1234500,
+            fee: 100,
+        });
+
+        assert_eq!(1, mempool.len());
+
+        mempool.add_tx(Transaction {
+            nonce: 123456,
+            from: "from_address2".to_string(),
+            to: "to_string2".to_string(),
+            amount: 12340,
+            fee: 80,
+        });
+
+        assert_eq!(1, mempool.len());
+
+        let tx = mempool.get_tx(123456);
+        assert!(tx.is_some_and(|t| t.nonce == 123456));
     }
 }

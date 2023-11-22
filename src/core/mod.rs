@@ -7,6 +7,7 @@ mod memory_pool;
 
 pub type Block = models::block::Block;
 pub type Transaction = models::transaction::Transaction;
+pub type TransactionPriority = models::transaction::TransactionPriority;
 pub type History = history::History;
 
 pub type NaiveReorgStrategy = history::NaiveReorgStrategy;
