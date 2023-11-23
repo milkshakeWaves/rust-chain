@@ -1,5 +1,5 @@
 use crate::core::{
-    hashing::{calculate_hash, hash_to_binary_representation},
+    hashing::{calculate_block_hash, hash_to_binary_representation},
     mining::DIFFICULTY_PREFIX,
 };
 use chrono::Utc;
@@ -54,7 +54,7 @@ impl Block {
             return Ok(false);
         }
 
-        let encoded_hash = hex::encode(calculate_hash(
+        let encoded_hash = hex::encode(calculate_block_hash(
             self.height,
             self.timestamp,
             &self.previous_hash,

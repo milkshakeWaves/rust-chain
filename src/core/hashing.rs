@@ -1,7 +1,7 @@
-use sha2::{Digest, Sha256};
 use super::Transaction;
+use sha2::{Digest, Sha256};
 
-pub fn calculate_hash(
+pub fn calculate_block_hash(
     height: u64,
     timestamp: i64,
     previous_hash: &str,
@@ -18,6 +18,18 @@ pub fn calculate_hash(
     let mut hasher = Sha256::new();
     hasher.update(data.to_string().as_bytes());
     hasher.finalize().as_slice().to_owned()
+}
+
+pub fn calculate_tx_nonce(from: &str, to: &str, amount: u64, fee: u64) -> String {
+    let data = serde_json::json!({
+        "from": from,
+        "to": to,
+        "amount": amount,
+        "fee": fee
+    });
+    let mut hasher = Sha256::new();
+    hasher.update(data.to_string().as_bytes());
+    hex::encode(hasher.finalize().as_slice().to_owned())
 }
 
 pub fn hash_to_binary_representation(hash: &[u8]) -> String {

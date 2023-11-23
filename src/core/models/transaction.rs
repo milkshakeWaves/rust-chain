@@ -1,12 +1,36 @@
 use serde::Serialize;
 
+use crate::core::{hashing::calculate_tx_nonce, TransactionValidationError};
+
 #[derive(Debug, Serialize, Clone, Eq)]
 pub struct Transaction {
-    pub nonce: u64,
+    pub nonce: String,
     pub from: String,
     pub to: String,
     pub amount: u64,
     pub fee: u64,
+}
+
+impl Transaction {
+    pub fn new(from: String, to: String, amount: u64, fee: u64) -> Transaction {
+        let nonce = calculate_tx_nonce(&from, &to, amount, fee);
+        Transaction {
+            nonce: nonce,
+            from: from,
+            to: to,
+            amount: amount,
+            fee: fee,
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), TransactionValidationError> {
+        let correct_nonce = calculate_tx_nonce(&self.from, &self.to, self.amount, self.fee);
+        if correct_nonce == self.nonce {
+            Ok(())
+        } else {
+            Err(TransactionValidationError {})
+        }
+    }
 }
 
 impl PartialEq for Transaction {
@@ -17,13 +41,13 @@ impl PartialEq for Transaction {
 
 #[derive(Debug, Serialize, Clone, Eq)]
 pub struct TransactionPriority {
-    pub nonce: u64,
+    pub nonce: String,
     pub fee: u64,
     pub amount: u64,
 }
 
 impl TransactionPriority {
-    pub fn new(nonce: u64, fee: u64, amount: u64) -> TransactionPriority {
+    pub fn new(nonce: String, fee: u64, amount: u64) -> TransactionPriority {
         TransactionPriority {
             nonce: nonce,
             fee: fee,
@@ -33,9 +57,9 @@ impl TransactionPriority {
 
     pub fn new_from_tx(tx: &Transaction) -> TransactionPriority {
         TransactionPriority {
-            nonce: tx.nonce,
+            nonce: tx.nonce.to_string(),
             fee: tx.fee,
-            amount: tx.amount
+            amount: tx.amount,
         }
     }
 }
@@ -58,5 +82,46 @@ impl PartialOrd for TransactionPriority {
 impl PartialEq for TransactionPriority {
     fn eq(&self, other: &Self) -> bool {
         self.nonce == other.nonce
+    }
+}
+
+#[cfg(test)]
+mod transaction_test {
+    use crate::core::Transaction;
+
+    #[test]
+    fn verify_correct_nonce_returns_true() {
+        let tx = Transaction::new(
+            "from-address".to_string(),
+            "to-address".to_string(),
+            12345,
+            100,
+        );
+
+        assert!(tx.validate().is_ok());
+    }
+
+    #[test]
+    fn verify_bad_nonce_returns_false() {
+        let mut tx = Transaction::new(
+            "from-address".to_string(),
+            "to-address".to_string(),
+            12345,
+            100,
+        );
+
+        tx.nonce = "bad-nonce".to_string();
+
+        assert!(tx.validate().is_err());
+
+        let tx2 = Transaction{
+            nonce: "another-bad-nonce".to_string(),
+            from: "from-address".to_string(),
+            to: "to-address".to_string(),
+            amount: 12345,
+            fee: 100,
+        };
+
+        assert!(tx2.validate().is_err());
     }
 }
