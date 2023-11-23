@@ -22,13 +22,14 @@ impl MemPool {
         if self.txs.len() == self.max_cap {
             self.evict_tx();
         }
-        
+
         let tx_priority = TransactionPriority::new_from_tx(&tx);
         if let Some(already_existing_tx) = self.txs.insert(tx.nonce, tx) {
-            self.prioritized_txs.retain(|t| t.nonce != already_existing_tx.nonce);
+            self.prioritized_txs
+                .retain(|t| t.nonce != already_existing_tx.nonce);
         }
         self.prioritized_txs.insert(tx_priority);
-        
+
         assert_eq!(self.prioritized_txs.len(), self.txs.len());
     }
 
@@ -40,6 +41,8 @@ impl MemPool {
                 if let Some(tx) = self.txs.remove(&tx_priority.nonce) {
                     result.push(tx);
                 }
+            } else {
+                break;
             }
         }
         assert_eq!(self.prioritized_txs.len(), self.txs.len());
@@ -51,16 +54,21 @@ impl MemPool {
         self.txs.get(&nonce)
     }
 
-    pub fn remove_tx(&mut self, nonce: u64) -> Option<Transaction> {
-        self.txs.remove(&nonce)
-    }
-
     pub fn evict_tx(&mut self) -> Option<Transaction> {
         if let Some(ev_tx) = self.prioritized_txs.pop_last() {
             let evicted_nonce = ev_tx.nonce;
-            return self.remove_tx(evicted_nonce);
+            return self.txs.remove(&evicted_nonce);
         }
 
+        None
+    }
+
+    pub fn remove_tx(&mut self, nonce: u64) -> Option<Transaction> {
+        if let Some(removed_tx) = self.txs.remove(&nonce) {
+            let tx_prior_to_remove = TransactionPriority::new_from_tx(&removed_tx);
+            self.prioritized_txs.remove(&tx_prior_to_remove);
+            return Some(removed_tx);
+        }
         None
     }
 
@@ -200,13 +208,13 @@ mod memory_pool_test {
             nonce: 123456,
             from: "from_address2".to_string(),
             to: "to_string2".to_string(),
-            amount: 1234500,
+            amount: 1234,
             fee: 80,
         });
 
         assert_eq!(1, mempool.len());
 
         let tx = mempool.get_tx(123456);
-        assert!(tx.is_some_and(|t| t.nonce == 123456));
+        assert!(tx.is_some_and(|t| t.nonce == 123456 && t.amount == 1234 && t.fee == 80));
     }
 }

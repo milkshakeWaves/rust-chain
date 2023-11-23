@@ -9,21 +9,6 @@ pub struct Transaction {
     pub fee: u64,
 }
 
-// impl Ord for Transaction {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         other
-//             .fee
-//             .cmp(&self.fee)
-//             .then_with(|| other.amount.cmp(&self.amount))
-//     }
-// }
-
-// impl PartialOrd for Transaction {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
-
 impl PartialEq for Transaction {
     fn eq(&self, other: &Self) -> bool {
         self.nonce == other.nonce
