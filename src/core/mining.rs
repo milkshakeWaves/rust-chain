@@ -1,5 +1,5 @@
 use hex;
-use crate::core::hashing::{calculate_hash, hash_to_binary_representation};
+use crate::core::hashing::{calculate_block_hash, hash_to_binary_representation};
 use super::Transaction;
 
 pub fn mine_new_block(
@@ -17,7 +17,7 @@ pub fn mine_new_block(
             println!("Still computing...");
         }
 
-        let hash = calculate_hash(height, timestamp, previous_hash, txs, nonce);
+        let hash = calculate_block_hash(height, timestamp, previous_hash, txs, nonce);
         let binary_hash = hash_to_binary_representation(&hash);
 
         if binary_hash.starts_with(DIFFICULTY_PREFIX) {
