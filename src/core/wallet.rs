@@ -10,7 +10,7 @@ impl Wallet {
         Wallet { keys: Vec::new() }
     }
 
-    pub fn add_key_pair(&mut self, key_pair: WalletKeyPair) -> () {
+    pub fn add_key_pair(&mut self, key_pair: WalletKeyPair) {
         self.keys.push(key_pair)
     }
 
@@ -55,9 +55,9 @@ mod wallet_test {
         let public_key = key_pair.public_key.clone();
         wallet.add_key_pair(key_pair);
 
-        let retrived_key_pair = wallet.get_public_keys();
-        assert_eq!(1, retrived_key_pair.len());
-        assert_eq!(&public_key, retrived_key_pair[0]);
+        let retrieved_key_pair = wallet.get_public_keys();
+        assert_eq!(1, retrieved_key_pair.len());
+        assert_eq!(&public_key, retrieved_key_pair[0]);
 
         for _ in 1..=5 {
             wallet.add_key_pair(WalletKeyPair::new());

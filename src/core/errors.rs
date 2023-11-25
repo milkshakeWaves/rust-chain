@@ -1,8 +1,5 @@
-use std::{fmt, io::Empty};
-
 use hex::FromHexError;
-
-use super::Transaction;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct AppendToHistoryError;
@@ -51,10 +48,4 @@ impl fmt::Display for EmptySignatureError {
     }
 }
 
-impl From<secp256k1::Error> for EmptySignatureError {
-    fn from(err: secp256k1::Error) -> EmptySignatureError {
-        EmptySignatureError {
-            msg: err.to_string(),
-        }
-    }
-}
+impl std::error::Error for EmptySignatureError {}

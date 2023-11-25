@@ -45,7 +45,7 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&mut self, secret_key: &SecretKey) -> () {
+    pub fn sign(&mut self, secret_key: &SecretKey) {
         let message: Message = Message::from_digest(self.to_hash());
         self.signature = Some(secret_key.sign_ecdsa(message));
     }
@@ -61,13 +61,15 @@ impl Transaction {
         calculate_hash(&data)
     }
 
-    pub fn verify_signature(&self, public_key: &PublicKey) -> Result<(), EmptySignatureError> {
+    pub fn verify_signature(&self, public_key: &PublicKey) -> Result<(), Box<dyn std::error::Error>> {
         let message: Message = Message::from_digest(self.to_hash());
         match self.signature {
-            Some(sig) => Ok(sig.verify(&message, public_key)?),
-            _ => Err(EmptySignatureError::new(format!(
+            Some(sig) => {
+                Ok(sig.verify(&message, public_key)?)
+            },
+            None => Err(Box::new(EmptySignatureError::new(format!(
                 "Transaction {} has an empty signature", self.nonce
-            ))),
+            )))),
         }
     }
 }

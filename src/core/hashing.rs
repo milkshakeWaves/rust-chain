@@ -4,8 +4,11 @@ use sha2::{Digest, Sha256};
 pub fn calculate_hash(data: &Value) -> [u8; 32] {
     let mut hasher = Sha256::new();
     hasher.update(data.to_string().as_bytes());
-    let hash = hasher.finalize();
-    Sha256::digest(hash).as_slice().try_into().expect("")
+    hasher
+        .finalize()
+        .as_slice()
+        .try_into()
+        .expect("Failed to convert hash to array")
 }
 
 pub fn hash_to_binary_representation(hash: &[u8]) -> String {
