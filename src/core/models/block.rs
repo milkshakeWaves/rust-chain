@@ -1,5 +1,5 @@
 use crate::core::{
-    hashing::{calculate_block_hash, hash_to_binary_representation},
+    hashing::{hash_to_binary_representation, calculate_hash},
     mining::DIFFICULTY_PREFIX,
 };
 use chrono::Utc;
@@ -54,13 +54,14 @@ impl Block {
             return Ok(false);
         }
 
-        let encoded_hash = hex::encode(calculate_block_hash(
-            self.height,
-            self.timestamp,
-            &self.previous_hash,
-            &self.txs,
-            self.nonce,
-        ));
+        let data = serde_json::json!({
+            "height": self.height,
+            "previous_hash": &self.previous_hash,
+            "txs": &self.txs,
+            "timestamp": self.timestamp,
+            "nonce": self.nonce
+        });
+        let encoded_hash = hex::encode(calculate_hash(&data));
 
         if encoded_hash != self.hash {
             return Ok(false);
