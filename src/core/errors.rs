@@ -1,8 +1,5 @@
-use std::fmt;
-
 use hex::FromHexError;
-
-use super::Transaction;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct AppendToHistoryError;
@@ -15,7 +12,7 @@ impl fmt::Display for AppendToHistoryError {
 
 impl From<FromHexError> for AppendToHistoryError {
     fn from(err: FromHexError) -> AppendToHistoryError {
-        AppendToHistoryError{}
+        AppendToHistoryError {}
     }
 }
 
@@ -30,6 +27,25 @@ impl fmt::Display for TransactionValidationError {
 
 impl From<FromHexError> for TransactionValidationError {
     fn from(err: FromHexError) -> TransactionValidationError {
-        TransactionValidationError{}
+        TransactionValidationError {}
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct EmptySignatureError {
+    msg: String,
+}
+
+impl EmptySignatureError {
+    pub fn new(error_msg: String) -> EmptySignatureError {
+        EmptySignatureError { msg: error_msg }
+    }
+}
+
+impl fmt::Display for EmptySignatureError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl std::error::Error for EmptySignatureError {}

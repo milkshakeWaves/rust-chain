@@ -1,6 +1,7 @@
+use secp256k1::{ecdsa::Signature, Message, PublicKey, SecretKey};
 use serde::Serialize;
 
-use crate::core::{hashing::calculate_tx_nonce, TransactionValidationError};
+use crate::core::{hashing::calculate_hash, EmptySignatureError, TransactionValidationError};
 
 #[derive(Debug, Serialize, Clone, Eq)]
 pub struct Transaction {
@@ -9,26 +10,66 @@ pub struct Transaction {
     pub to: String,
     pub amount: u64,
     pub fee: u64,
+    pub signature: Option<Signature>,
 }
 
 impl Transaction {
     pub fn new(from: String, to: String, amount: u64, fee: u64) -> Transaction {
-        let nonce = calculate_tx_nonce(&from, &to, amount, fee);
+        let data = serde_json::json!({
+            "from": from,
+            "to": to,
+            "amount": amount,
+            "fee": fee
+        });
         Transaction {
-            nonce: nonce,
+            nonce: hex::encode(calculate_hash(&data)),
             from: from,
             to: to,
             amount: amount,
             fee: fee,
+            signature: None,
         }
     }
 
     pub fn validate(&self) -> Result<(), TransactionValidationError> {
-        let correct_nonce = calculate_tx_nonce(&self.from, &self.to, self.amount, self.fee);
-        if correct_nonce == self.nonce {
+        let data = serde_json::json!({
+            "from": self.from,
+            "to": self.to,
+            "amount": self.amount,
+            "fee": self.fee
+        });
+        if hex::encode(calculate_hash(&data)) == self.nonce {
             Ok(())
         } else {
             Err(TransactionValidationError {})
+        }
+    }
+
+    pub fn sign(&mut self, secret_key: &SecretKey) {
+        let message: Message = Message::from_digest(self.to_hash());
+        self.signature = Some(secret_key.sign_ecdsa(message));
+    }
+
+    pub fn to_hash(&self) -> [u8; 32] {
+        let data = serde_json::json!({
+            "nonce": &self.nonce,
+            "from": &self.from,
+            "to": &self.to,
+            "amount": self.amount,
+            "fee": self.fee
+        });
+        calculate_hash(&data)
+    }
+
+    pub fn verify_signature(&self, public_key: &PublicKey) -> Result<(), Box<dyn std::error::Error>> {
+        let message: Message = Message::from_digest(self.to_hash());
+        match self.signature {
+            Some(sig) => {
+                Ok(sig.verify(&message, public_key)?)
+            },
+            None => Err(Box::new(EmptySignatureError::new(format!(
+                "Transaction {} has an empty signature", self.nonce
+            )))),
         }
     }
 }
@@ -114,12 +155,13 @@ mod transaction_test {
 
         assert!(tx.validate().is_err());
 
-        let tx2 = Transaction{
+        let tx2 = Transaction {
             nonce: "another-bad-nonce".to_string(),
             from: "from-address".to_string(),
             to: "to-address".to_string(),
             amount: 12345,
             fee: 100,
+            signature: None,
         };
 
         assert!(tx2.validate().is_err());
